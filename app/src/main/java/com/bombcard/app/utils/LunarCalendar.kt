@@ -35,7 +35,10 @@ object LunarCalendar {
         val day = cal.get(Calendar.DAY_OF_MONTH)
         val weekDays = arrayOf("周日", "周一", "周二", "周三", "周四", "周五", "周六")
         val weekDay = weekDays[cal.get(Calendar.DAY_OF_WEEK) - 1]
-        return "$year年${month}月${day}日 $weekDay"
+        val nian = "年"
+        val yue = "月"
+        val ri = "日"
+        return year.toString() + nian + month.toString() + yue + day.toString() + ri + " " + weekDay
     }
 
     fun getLunarDate(): String {
