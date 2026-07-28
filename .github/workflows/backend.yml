@@ -1,0 +1,24 @@
+name: Backend CI/CD
+
+on:
+  push:
+    branches: [ main, master ]
+    paths:
+      - 'backend/**'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Build Docker Image
+      run: |
+        cd backend
+        docker build -t bombcard-backend .
+        
+    - name: Deploy to Server
+      run: |
+        echo "部署命令在这里执行"
+        # 这里可以添加部署到服务器的命令

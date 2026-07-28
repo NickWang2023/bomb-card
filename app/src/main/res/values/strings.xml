@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">炸弹卡片</string>
+    <string name="app_title">💣 心灵炸弹</string>
+    <string name="today_bomb">今日心灵炸弹</string>
+    <string name="refresh">换一张</string>
+    <string name="weather_placeholder">天气预报占位</string>
+    <string name="motivational_quote">💡 每天一颗心灵炸弹，引爆你的正能量！</string>
+</resources>

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="deep_orange">#FFE65100</color>
+    <color name="deep_orange_light">#FFFF9800</color>
+    <color name="warm_white">#FFFFFBF5</color>
+    <color name="dark_text">#FF3E2723</color>
+</resources>
