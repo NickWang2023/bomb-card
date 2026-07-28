@@ -48,7 +48,9 @@ object LunarCalendar {
         val yearStr = lunar.year
         val monthStr = lunar.month
         val dayStr = lunar.day
-        return yearStr + "年" + monthStr + "月" + dayStr
+        val nian = "年"
+        val yue = "月"
+        return yearStr + nian + monthStr + yue + dayStr
     }
 
     fun getLunarDateFull(): String {
@@ -62,7 +64,10 @@ object LunarCalendar {
         val monthStr = lunar.month
         val dayStr = lunar.day
         val animalStr = lunar.animal
-        return yearStr + "年" + monthStr + "月" + dayStr + " " + animalStr + "年"
+        val nian = "年"
+        val yue = "月"
+        val space = " "
+        return yearStr + nian + monthStr + yue + dayStr + space + animalStr + nian
     }
 
     private fun solarToLunar(year: Int, month: Int, day: Int): LunarDate {
