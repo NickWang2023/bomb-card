@@ -28,6 +28,16 @@ object LunarCalendar {
     private val nStr2 = arrayOf("初", "十", "廿", "卅", " ")
     private val monthNong = arrayOf("正", "二", "三", "四", "五", "六", "七", "八", "九", "十", "冬", "腊")
 
+    fun getCurrentDate(): String {
+        val cal = Calendar.getInstance()
+        val year = cal.get(Calendar.YEAR)
+        val month = cal.get(Calendar.MONTH) + 1
+        val day = cal.get(Calendar.DAY_OF_MONTH)
+        val weekDays = arrayOf("周日", "周一", "周二", "周三", "周四", "周五", "周六")
+        val weekDay = weekDays[cal.get(Calendar.DAY_OF_WEEK) - 1]
+        return "$year年${month}月${day}日 $weekDay"
+    }
+
     fun getLunarDate(): String {
         val cal = Calendar.getInstance()
         val year = cal.get(Calendar.YEAR)
@@ -36,6 +46,16 @@ object LunarCalendar {
         
         val lunar = solarToLunar(year, month, day)
         return "${lunar.year}年${lunar.month}月${lunar.day}"
+    }
+
+    fun getLunarDateFull(): String {
+        val cal = Calendar.getInstance()
+        val year = cal.get(Calendar.YEAR)
+        val month = cal.get(Calendar.MONTH) + 1
+        val day = cal.get(Calendar.DAY_OF_MONTH)
+        
+        val lunar = solarToLunar(year, month, day)
+        return "${lunar.year}年${lunar.month}月${lunar.day} ${lunar.animal}年"
     }
 
     private fun solarToLunar(year: Int, month: Int, day: Int): LunarDate {
