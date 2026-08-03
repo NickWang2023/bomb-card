@@ -35,10 +35,7 @@ object LunarCalendar {
         val day = cal.get(Calendar.DAY_OF_MONTH)
         val weekDays = arrayOf("周日", "周一", "周二", "周三", "周四", "周五", "周六")
         val weekDay = weekDays[cal.get(Calendar.DAY_OF_WEEK) - 1]
-        val nian = "年"
-        val yue = "月"
-        val ri = "日"
-        return year.toString() + nian + month.toString() + yue + day.toString() + ri + " " + weekDay
+        return year.toString() + "年" + month.toString() + "月" + day.toString() + "日 " + weekDay
     }
 
     fun getLunarDate(): String {
@@ -48,12 +45,7 @@ object LunarCalendar {
         val day = cal.get(Calendar.DAY_OF_MONTH)
         
         val lunar = solarToLunar(year, month, day)
-        val yearStr = lunar.year
-        val monthStr = lunar.month
-        val dayStr = lunar.day
-        val nian = "年"
-        val yue = "月"
-        return yearStr + nian + monthStr + yue + dayStr
+        return lunar.year + "年" + lunar.month + "月" + lunar.day
     }
 
     fun getLunarDateFull(): String {
@@ -63,21 +55,14 @@ object LunarCalendar {
         val day = cal.get(Calendar.DAY_OF_MONTH)
         
         val lunar = solarToLunar(year, month, day)
-        val yearStr = lunar.year
-        val monthStr = lunar.month
-        val dayStr = lunar.day
-        val animalStr = lunar.animal
-        val nian = "年"
-        val yue = "月"
-        val space = " "
-        return yearStr + nian + monthStr + yue + dayStr + space + animalStr + nian
+        return lunar.year + "年" + lunar.month + "月" + lunar.day + " " + lunar.animal + "年"
     }
 
     private fun solarToLunar(year: Int, month: Int, day: Int): LunarDate {
-        var baseDate = Calendar.getInstance()
+        val baseDate = Calendar.getInstance()
         baseDate.set(1900, 0, 31)
         
-        var objDate = Calendar.getInstance()
+        val objDate = Calendar.getInstance()
         objDate.set(year, month - 1, day)
         
         var offset = ((objDate.timeInMillis - baseDate.timeInMillis) / 86400000L).toInt()
@@ -136,9 +121,12 @@ object LunarCalendar {
         val lunarMonth = iMonth
         val lunarDay = offset + 1
         
+        val yearGanZhi = gan[(lunarYear - 4) % 10] + zhi[(lunarYear - 4) % 12]
+        val monthStr = if (isLeap) "闰" + monthNong[lunarMonth - 1] else monthNong[lunarMonth - 1]
+        
         return LunarDate(
-            year = "${gan[(lunarYear - 4) % 10]}${zhi[(lunarYear - 4) % 12]}",
-            month = if (isLeap) "闰${monthNong[lunarMonth - 1]}" else monthNong[lunarMonth - 1],
+            year = yearGanZhi,
+            month = monthStr,
             day = cDay(lunarDay),
             animal = animals[(lunarYear - 4) % 12]
         )
@@ -168,17 +156,12 @@ object LunarCalendar {
     }
 
     private fun cDay(d: Int): String {
-        var s = ""
-        when (d) {
-            10 -> s = "初十"
-            20 -> s = "二十"
-            30 -> s = "三十"
-            else -> {
-                s = nStr2[d / 10]
-                s += nStr1[d % 10]
-            }
+        return when (d) {
+            10 -> "初十"
+            20 -> "二十"
+            30 -> "三十"
+            else -> nStr2[d / 10] + nStr1[d % 10]
         }
-        return s
     }
 }
 
