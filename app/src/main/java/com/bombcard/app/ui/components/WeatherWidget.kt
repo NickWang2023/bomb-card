@@ -18,12 +18,21 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.bombcard.app.ui.theme.*
+import com.bombcard.app.utils.ConfigManager
 
 @Composable
 fun WeatherWidget() {
     val context = LocalContext.current
     
-    // 可配置的广告/推广区域
+    // 从配置文件读取底部链接配置
+    val config = remember { ConfigManager.getBottomLinkConfig(context) }
+    
+    // 如果禁用则不显示
+    if (!config.enabled) {
+        Spacer(modifier = Modifier.height(0.dp))
+        return
+    }
+    
     Surface(
         shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
         color = DeepOrange.copy(alpha = 0.08f),
@@ -31,9 +40,12 @@ fun WeatherWidget() {
             .fillMaxWidth()
             .height(80.dp)
             .clickable {
-                // 点击打开链接 - 修改这里替换为你的链接
-                val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/NickWang2023/bomb-card"))
-                context.startActivity(intent)
+                try {
+                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse(config.url))
+                    context.startActivity(intent)
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
             }
     ) {
         Row(
@@ -58,13 +70,13 @@ fun WeatherWidget() {
                 
                 Column {
                     Text(
-                        text = "💣 炸弹卡片",
+                        text = config.title,
                         style = MaterialTheme.typography.titleMedium,
                         color = DarkText,
                         fontWeight = FontWeight.Bold
                     )
                     Text(
-                        text = "点击了解更多 · 每日心灵鸡汤",
+                        text = config.subtitle,
                         style = MaterialTheme.typography.labelMedium,
                         color = LightText,
                         maxLines = 1,
@@ -73,7 +85,7 @@ fun WeatherWidget() {
                 }
             }
             
-            // 右侧：箭头或按钮
+            // 右侧：按钮
             Surface(
                 shape = RoundedCornerShape(16.dp),
                 color = DeepOrange.copy(alpha = 0.15f),
@@ -84,7 +96,7 @@ fun WeatherWidget() {
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = "去看看",
+                        text = config.buttonText,
                         style = MaterialTheme.typography.labelMedium,
                         color = DeepOrange,
                         fontWeight = FontWeight.Medium
