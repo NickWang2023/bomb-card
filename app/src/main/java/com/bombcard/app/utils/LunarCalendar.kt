@@ -28,6 +28,9 @@ object LunarCalendar {
     private val nStr2 = arrayOf("初", "十", "廿", "卅", " ")
     private val monthNong = arrayOf("正", "二", "三", "四", "五", "六", "七", "八", "九", "十", "冬", "腊")
 
+    private const val MIN_YEAR = 1900
+    private const val MAX_YEAR = 2099
+
     fun getCurrentDate(): String {
         val cal = Calendar.getInstance()
         val year = cal.get(Calendar.YEAR)
@@ -39,41 +42,88 @@ object LunarCalendar {
     }
 
     fun getLunarDate(): String {
-        val cal = Calendar.getInstance()
-        val year = cal.get(Calendar.YEAR)
-        val month = cal.get(Calendar.MONTH) + 1
-        val day = cal.get(Calendar.DAY_OF_MONTH)
-        
-        val lunar = solarToLunar(year, month, day)
-        return lunar.year + "年" + lunar.month + "月" + lunar.day
+        return try {
+            val cal = Calendar.getInstance()
+            val year = cal.get(Calendar.YEAR)
+            val month = cal.get(Calendar.MONTH) + 1
+            val day = cal.get(Calendar.DAY_OF_MONTH)
+            
+            // 边界检查
+            if (year < MIN_YEAR || year > MAX_YEAR) {
+                return getSimpleLunarFallback(year, month, day)
+            }
+            
+            val lunar = solarToLunar(year, month, day)
+            lunar.year + "年" + lunar.month + "月" + lunar.day
+        } catch (e: Exception) {
+            // 任何异常都返回安全回退值
+            getSimpleLunarFallback(Calendar.getInstance().get(Calendar.YEAR), 
+                Calendar.getInstance().get(Calendar.MONTH) + 1,
+                Calendar.getInstance().get(Calendar.DAY_OF_MONTH))
+        }
     }
 
     fun getLunarDateFull(): String {
-        val cal = Calendar.getInstance()
-        val year = cal.get(Calendar.YEAR)
-        val month = cal.get(Calendar.MONTH) + 1
-        val day = cal.get(Calendar.DAY_OF_MONTH)
-        
-        val lunar = solarToLunar(year, month, day)
-        return lunar.year + "年" + lunar.month + "月" + lunar.day + " " + lunar.animal + "年"
+        return try {
+            val cal = Calendar.getInstance()
+            val year = cal.get(Calendar.YEAR)
+            val month = cal.get(Calendar.MONTH) + 1
+            val day = cal.get(Calendar.DAY_OF_MONTH)
+            
+            if (year < MIN_YEAR || year > MAX_YEAR) {
+                return getSimpleLunarFallback(year, month, day)
+            }
+            
+            val lunar = solarToLunar(year, month, day)
+            lunar.year + "年" + lunar.month + "月" + lunar.day + " " + lunar.animal + "年"
+        } catch (e: Exception) {
+            getSimpleLunarFallback(Calendar.getInstance().get(Calendar.YEAR),
+                Calendar.getInstance().get(Calendar.MONTH) + 1,
+                Calendar.getInstance().get(Calendar.DAY_OF_MONTH))
+        }
+    }
+
+    private fun getSimpleLunarFallback(year: Int, month: Int, day: Int): String {
+        // 简单的回退显示，不计算真实农历
+        val ganZhi = gan[(year - 4) % 10] + zhi[(year - 4) % 12]
+        val animal = animals[(year - 4) % 12]
+        return ganZhi + "年 " + animal + "年"
     }
 
     private fun solarToLunar(year: Int, month: Int, day: Int): LunarDate {
         val baseDate = Calendar.getInstance()
-        baseDate.set(1900, 0, 31)
+        baseDate.set(MIN_YEAR, 0, 31, 0, 0, 0)
+        baseDate.set(Calendar.MILLISECOND, 0)
         
         val objDate = Calendar.getInstance()
-        objDate.set(year, month - 1, day)
+        objDate.set(year, month - 1, day, 0, 0, 0)
+        objDate.set(Calendar.MILLISECOND, 0)
         
         var offset = ((objDate.timeInMillis - baseDate.timeInMillis) / 86400000L).toInt()
         
-        var iYear = 1900
-        var daysOfYear = 0
+        // 安全检查
+        if (offset < 0) offset = 0
         
-        while (iYear < 2100 && offset > 0) {
+        var iYear = MIN_YEAR
+        var daysOfYear = 0
+        var loopCount = 0
+        val maxLoop = 300  // 防止死循环
+        
+        while (iYear <= MAX_YEAR && offset > 0 && loopCount < maxLoop) {
             daysOfYear = lYearDays(iYear)
             offset -= daysOfYear
             iYear++
+            loopCount++
+        }
+        
+        if (loopCount >= maxLoop) {
+            // 死循环保护，返回回退值
+            return LunarDate(
+                year = gan[(year - 4) % 10] + zhi[(year - 4) % 12],
+                month = monthNong[0],
+                day = "初一",
+                animal = animals[(year - 4) % 12]
+            )
         }
         
         if (offset < 0) {
@@ -81,48 +131,66 @@ object LunarCalendar {
             iYear--
         }
         
+        if (iYear > MAX_YEAR) {
+            iYear = MAX_YEAR
+            offset = 0
+        }
+        
         val lunarYear = iYear
         val leapMonth = leapMonth(iYear)
         var isLeap = false
         var iMonth = 1
         var daysOfMonth = 0
+        loopCount = 0
         
-        while (iMonth < 13 && offset > 0) {
+        while (iMonth <= 13 && offset > 0 && loopCount < maxLoop) {
             if (leapMonth > 0 && iMonth == leapMonth + 1 && !isLeap) {
-                iMonth--
+                // 这是闰月
                 isLeap = true
                 daysOfMonth = leapDays(lunarYear)
             } else {
                 daysOfMonth = monthDays(lunarYear, iMonth)
             }
             
+            offset -= daysOfMonth
+            
             if (isLeap && iMonth == leapMonth + 1) {
-                isLeap = false
+                // 闰月处理完，继续正常月份
             }
             
-            offset -= daysOfMonth
-            iMonth++
+            if (offset > 0) {
+                iMonth++
+                if (isLeap && iMonth > leapMonth + 1) {
+                    isLeap = false
+                }
+            }
+            loopCount++
         }
         
-        if (offset == 0 && leapMonth > 0 && iMonth == leapMonth + 1) {
-            if (isLeap) {
-                isLeap = false
-            } else {
-                isLeap = true
-                iMonth--
-            }
+        if (loopCount >= maxLoop) {
+            return LunarDate(
+                year = gan[(lunarYear - 4) % 10] + zhi[(lunarYear - 4) % 12],
+                month = monthNong[0],
+                day = "初一",
+                animal = animals[(lunarYear - 4) % 12]
+            )
         }
         
         if (offset < 0) {
             offset += daysOfMonth
-            iMonth--
+        } else if (offset == 0) {
+            // 正好是月末
+            offset = daysOfMonth
+            if (iMonth > 1) {
+                iMonth--
+            }
         }
         
-        val lunarMonth = iMonth
+        val lunarMonth = if (iMonth > 12) 12 else iMonth
         val lunarDay = offset + 1
         
         val yearGanZhi = gan[(lunarYear - 4) % 10] + zhi[(lunarYear - 4) % 12]
-        val monthStr = if (isLeap) "闰" + monthNong[lunarMonth - 1] else monthNong[lunarMonth - 1]
+        val monthStr = if (isLeap && lunarMonth == leapMonth) "闰" + monthNong[lunarMonth - 1] else monthNong[lunarMonth - 1]
         
         return LunarDate(
             year = yearGanZhi,
@@ -133,26 +201,31 @@ object LunarCalendar {
     }
 
     private fun lYearDays(y: Int): Int {
+        if (y < MIN_YEAR || y > MAX_YEAR) return 354
         var sum = 348
         for (i in 0x8000 downTo 0x8) {
-            if ((lunarInfo[y - 1900] and i.toLong()) != 0L) sum++
+            if ((lunarInfo[y - MIN_YEAR] and i.toLong()) != 0L) sum++
         }
         return sum + leapDays(y)
     }
 
     private fun leapDays(y: Int): Int {
+        if (y < MIN_YEAR || y > MAX_YEAR) return 0
         if (leapMonth(y) != 0) {
-            return if ((lunarInfo[y - 1900] and 0x10000L) != 0L) 30 else 29
+            return if ((lunarInfo[y - MIN_YEAR] and 0x10000L) != 0L) 30 else 29
         }
         return 0
     }
 
     private fun leapMonth(y: Int): Int {
-        return (lunarInfo[y - 1900] and 0xf).toInt()
+        if (y < MIN_YEAR || y > MAX_YEAR) return 0
+        return (lunarInfo[y - MIN_YEAR] and 0xf).toInt()
     }
 
     private fun monthDays(y: Int, m: Int): Int {
-        return if ((lunarInfo[y - 1900] and (0x10000 shr m).toLong()) != 0L) 30 else 29
+        if (y < MIN_YEAR || y > MAX_YEAR) return 29
+        if (m < 1 || m > 12) return 29
+        return if ((lunarInfo[y - MIN_YEAR] and (0x10000 shr m).toLong()) != 0L) 30 else 29
     }
 
     private fun cDay(d: Int): String {
